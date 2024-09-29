@@ -1,3 +1,4 @@
+// src/routes/jobRoutes.js
 const express = require('express');
 const Job = require('../models/Job');
 const jwt = require('jsonwebtoken');
@@ -63,6 +64,32 @@ router.put('/:id', auth, async (req, res) => {
     res.json(job);
   } catch (error) {
     res.status(500).send('Server error');
+  }
+});
+
+// Delete a Job Application
+// Backend Delete Route
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    
+    // Check if job exists
+    if (!job) {
+      console.error(`Job with ID ${req.params.id} not found.`);
+      return res.status(404).json({ msg: 'Job not found' });
+    }
+
+    // Check if the job belongs to the logged-in user
+    if (job.user.toString() !== req.user.id) {
+      console.error('Unauthorized deletion attempt detected.');
+      return res.status(401).json({ msg: 'Not authorized' });
+    }
+
+    await job.deleteOne();
+    res.json({ msg: 'Job removed successfully' });
+  } catch (error) {
+    console.error('Error deleting job:', error.message); // Log detailed error message
+    res.status(500).json({ msg: 'Server error' });
   }
 });
 
